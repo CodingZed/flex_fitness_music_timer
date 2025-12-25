@@ -1,0 +1,10 @@
+# MP3 files
+*.mp3
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

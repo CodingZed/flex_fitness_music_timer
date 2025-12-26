@@ -62,12 +62,18 @@
             justify-content: center;
             gap: 8px;
             margin-bottom: 2rem;
+            /* Ensure items don't get squeezed */
+            flex-wrap: nowrap;
         }
 
         .logo-icon {
             /* Adjusted size for better balance with title */
             height: 48px; 
             width: auto;
+            /* Ensure logo maintains its aspect ratio */
+            object-fit: contain;
+            /* Prevent any stretching */
+            flex-shrink: 0;
             /* Simple styling for transparent logo */
             background: transparent;
             /* Add neon glow effect */

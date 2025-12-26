@@ -68,10 +68,17 @@
             /* Adjusted size for image */
             height: 55px; 
             width: auto;
-            /* Ensures proper transparency handling */
+            /* Remove white background completely while preserving logo */
             background: transparent;
-            /* Adds neon glow to the logo */
-            filter: drop-shadow(0 0 8px rgba(192, 255, 51, 0.6));
+            filter: 
+                /* Convert to black and white */
+                brightness(0) contrast(100%) 
+                /* Invert to make logo white on black */
+                invert(1) 
+                /* Colorize to neon green */
+                sepia(1) saturate(1000%) hue-rotate(35deg) 
+                /* Add neon glow */
+                drop-shadow(0 0 8px rgba(192, 255, 51, 0.6));
         }
 
         h1 {

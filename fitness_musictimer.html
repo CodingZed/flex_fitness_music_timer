@@ -68,17 +68,10 @@
             /* Adjusted size for image */
             height: 55px; 
             width: auto;
-            /* Remove white background completely while preserving logo */
+            /* Simple styling for transparent logo */
             background: transparent;
-            filter: 
-                /* Convert to black and white */
-                brightness(0) contrast(100%) 
-                /* Invert to make logo white on black */
-                invert(1) 
-                /* Colorize to neon green */
-                sepia(1) saturate(1000%) hue-rotate(35deg) 
-                /* Add neon glow */
-                drop-shadow(0 0 8px rgba(192, 255, 51, 0.6));
+            /* Add neon glow effect */
+            filter: drop-shadow(0 0 8px rgba(192, 255, 51, 0.6));
         }
 
         h1 {
@@ -210,7 +203,7 @@
 
 <div class="container">
     <div class="app-header">
-        <img src="z-rival-logo.png" alt="Z-Rival Logo" class="logo-icon">
+        <img src="z-rival-logo-transparent.png" alt="Z-Rival Logo" class="logo-icon">
         <h1>Fitness Timer</h1>
     </div>
 

@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Z-Rival Fitness Timer</title>
+    <title>RIVAL FITNESS TIMER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     <style>
         :root {
             /* Modern Neon Theme */
-            --bg-color: #121212;
-            --card-bg: rgba(25, 25, 25, 0.92); 
+            --bg-color: #050505;
+            --card-bg: rgba(20, 20, 20, 0.9); 
             --text-main: #ffffff;
-            --text-muted: #a0a0a0;
+            --text-muted: #888888;
             --accent-work: #c0ff33; /* Neon Lime */
             --accent-rest: #ff9f43; /* Tangerine */
             --danger: #ff4757;
-            --input-bg: #2c2c2c;
-            --border-radius: 12px;
+            --input-bg: #1a1a1a;
+            --border-radius: 16px;
         }
 
         body {
@@ -27,7 +28,6 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            text-align: center;
             overflow: hidden;
         }
 
@@ -42,81 +42,72 @@
             background: var(--bg-color);
         }
 
+        /* --- NEW VISUALIZER CANVAS --- */
+        #visualizerCanvas {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 35%; /* Takes up bottom 35% of screen */
+            z-index: 5; /* Behind the card, in front of BG */
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
         .container {
-            width: 90%;
-            max-width: 450px;
+            width: 100%;
+            max-width: 500px;
+            height: 95vh;
+            max-height: 900px;
             background: var(--card-bg);
-            padding: 2.5rem;
+            padding: 2rem;
             border-radius: var(--border-radius);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-            border: 1px solid #333;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+            border: 1px solid rgba(255,255,255,0.08);
             position: relative;
             z-index: 10;
-            backdrop-filter: blur(8px); 
-            max-height: 90vh; /* Prevent it from being too tall on mobile */
-            overflow-y: auto; /* Allow scrolling if presets get long */
-        }
-
-        /* --- Header & Logo Styling --- */
-        .app-header {
+            backdrop-filter: blur(25px);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 2rem;
-            /* Ensure items don't get squeezed */
-            flex-wrap: nowrap;
-        }
-
-        .logo-icon {
-            /* Set fixed dimensions for circular shape */
-            height: 48px;
-            width: 48px;
-            /* Ensure logo maintains its aspect ratio within circular container */
-            object-fit: contain;
-            /* Prevent any flex container squeezing */
-            flex-shrink: 0;
-            /* Add circular styling */
-            border-radius: 50%;
-            /* Simple styling for transparent logo */
-            background: transparent;
-            /* Add neon glow effect */
-            filter: drop-shadow(0 0 8px rgba(192, 255, 51, 0.6));
-        }
-
-        h1 {
-            margin: 0; 
-            font-size: 1.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent-work);
-            text-shadow: 0 0 15px rgba(192, 255, 51, 0.5);
-            line-height: 1;
-        }
-
-        /* Inputs */
-        .form-group { margin-bottom: 1.2rem; text-align: left; }
-        label { 
-            display: block; 
-            margin-bottom: 0.5rem; 
-            font-size: 0.85rem; 
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
+            flex-direction: column;
+            overflow-y: auto;
         }
         
-        input[type="number"], input[type="file"], input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: var(--input-bg);
-            color: white;
-            box-sizing: border-box;
-            font-size: 1rem;
-            transition: border-color 0.3s;
+        .container::-webkit-scrollbar { display: none; }
+
+        /* --- Header --- */
+        .app-header {
+            display: flex; align-items: center; justify-content: center;
+            gap: 15px; margin-bottom: 1rem; flex-shrink: 0;
         }
-        input:focus { outline: none; border-color: var(--accent-work); }
+        .logo-icon {
+            height: 40px; width: 40px;
+            border-radius: 50%; object-fit: cover;
+            filter: drop-shadow(0 0 8px rgba(192, 255, 51, 0.5));
+            mix-blend-mode: screen; 
+        }
+        h1 {
+            margin: 0; font-size: 1.5rem; 
+            font-family: 'Black Ops One', cursive;
+            text-transform: uppercase; letter-spacing: 2px;
+            color: var(--accent-work);
+            text-shadow: 0 0 15px rgba(192, 255, 51, 0.3);
+        }
+
+        /* --- Setup Inputs --- */
+        #setupSection { display: flex; flex-direction: column; }
+        
+        .form-group { text-align: left; margin-bottom: 15px; }
+        /* Remove margin from last form group */
+        .form-group:last-child { margin-bottom: 0; }
+        label { display: block; margin-bottom: 5px; font-size: 0.7rem; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        input[type="number"], input[type="file"], input[type="text"] {
+            width: 100%; padding: 12px; border-radius: 8px;
+            border: 1px solid #333; background: var(--input-bg);
+            color: white; box-sizing: border-box; font-size: 1rem;
+            font-family: 'Segoe UI', sans-serif;
+            transition: 0.3s;
+        }
+        input:focus { outline: none; border-color: var(--accent-work); background: #222; }
 
         .error-msg {
             color: var(--danger);
@@ -128,46 +119,61 @@
 
         /* --- PRESET SECTION STYLES --- */
         .preset-section {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #444;
+            margin-top: 0; padding-top: 1rem; border-top: 1px solid #333;
             text-align: left;
         }
         
         .preset-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
+            display: flex; gap: 10px; margin-bottom: 10px;
         }
 
         .btn-save-preset {
-            background-color: var(--accent-rest);
-            color: white;
+            background: #333; color: var(--accent-work); border: 1px solid var(--accent-work);
+            border-radius: 8px; font-weight: 700; padding: 0 15px; cursor: pointer;
             flex: 0 0 80px; /* Fixed width */
-            border-radius: 8px;
             font-size: 0.9rem;
-            padding: 0;
         }
 
         .preset-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 150px;
-            overflow-y: auto;
-            padding-right: 5px;
+            display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;
+            padding-right: 4px;
         }
 
+        /* Hide scrollbar by default, show only when scrolling */
+        .preset-list {
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+        }
+        
+        .preset-list:hover,
+        .preset-list:focus {
+            scrollbar-color: rgba(192, 255, 51, 0.6) rgba(0, 0, 0, 0.2);
+        }
+        
         /* Scrollbar styling for preset list */
-        .preset-list::-webkit-scrollbar { width: 6px; }
-        .preset-list::-webkit-scrollbar-track { background: #222; }
-        .preset-list::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        .preset-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .preset-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        
+        .preset-list::-webkit-scrollbar-thumb {
+            background: rgba(192, 255, 51, 0.6);
+            border-radius: 3px;
+        }
+        
+        .preset-list::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-work);
+        }
 
         .preset-item {
-            background: #2a2a2a;
-            border: 1px solid #444;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid transparent;
             padding: 10px 15px;
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -177,7 +183,7 @@
 
         .preset-item:hover {
             border-color: var(--accent-work);
-            background: #333;
+            background: rgba(192, 255, 51, 0.05);
             transform: translateX(2px);
         }
 
@@ -187,14 +193,14 @@
         }
 
         .preset-name {
-            color: var(--accent-work);
-            font-weight: bold;
-            font-size: 0.95rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #fff;
         }
 
         .preset-details {
-            color: var(--text-muted);
-            font-size: 0.75rem;
+            color: #888;
+            font-size: 0.7rem;
             margin-top: 2px;
         }
 
@@ -213,90 +219,137 @@
             transform: scale(1.1);
         }
 
-        /* Buttons */
-        .btn-group { display: flex; gap: 15px; margin-top: 25px; }
-        button {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 50px; /* Pill shape */
-            font-weight: 800;
+        /* --- Buttons --- */
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        
+        button.main-btn {
+            flex: 1; padding: 12px 20px; border: none; border-radius: 4px;
+            font-family: 'Black Ops One', cursive; 
+            font-size: 1rem; letter-spacing: 1px;
+            cursor: pointer; transition: transform 0.1s, box-shadow 0.2s;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
+        }
+        button {
             transition: transform 0.1s, opacity 0.2s;
         }
         button:active { transform: scale(0.98); }
         button:disabled { opacity: 0.3; cursor: not-allowed; }
         
         .btn-start { 
-            background-color: var(--accent-work); 
+            background: var(--accent-work); 
             color: #000; 
-            box-shadow: 0 0 20px rgba(192, 255, 51, 0.6);
-        }
-        .btn-stop { 
-            background-color: var(--danger); 
-            color: white; 
-        }
-
-        /* Status Panel */
-        #statusPanel {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #333;
-            display: none;
-        }
-
-        .phase-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            box-shadow: 0 0 20px var(--accent-work), inset 0 0 10px rgba(0,0,0,0.2); 
             font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 10px;
+            padding: 15px 30px;
+            margin: 0 auto;
+            display: block;
+            width: auto;
         }
         
-        /* Active Phase Colors */
-        .phase-work { background: rgba(192, 255, 51, 0.2); color: var(--accent-work); }
-        .phase-rest { background: rgba(255, 159, 67, 0.2); color: var(--accent-rest); }
+        .btn-pause {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-pause.paused {
+            background: var(--accent-rest);
+            color: black;
+            box-shadow: 0 0 20px rgba(255, 159, 67, 0.6);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .btn-stop {
+            background: #222;
+            color: #666;
+        }
+
+        /* --- STATUS PANEL --- */
+        #statusPanel { 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            height: 100%;
+            animation: fadeIn 0.5s ease;
+        }
 
         /* Circular Progress Timer */
         .timer-container {
             position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 0 auto 1.5rem;
+            width: 380px; 
+            height: 380px;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 10px 0 20px 0;
         }
         
         .progress-ring {
+            width: 100%;
+            height: 100%;
             transform: rotate(-90deg);
+            overflow: visible;
         }
         
-        .progress-ring-circle {
-            transition: stroke-dashoffset 0.5s ease-in-out;
-            transform-origin: center;
+        .progress-ring__circle-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 8;
         }
         
-        .timer-display {
+        .progress-ring__circle {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round; 
+            transition: stroke-dashoffset 1s linear, filter 0.3s ease, stroke 0.3s ease; 
+            transform-origin: 50% 50%;
+            filter: drop-shadow(0 0 8px var(--accent-work));
+        }
+        
+        .timer-center {
             position: absolute;
-            font-size: 6rem;
-            font-weight: 900;
-            line-height: 1;
-            font-variant-numeric: tabular-nums;
-            color: var(--text-main);
-            text-shadow: 0 0 30px rgba(255,255,255,0.3);
-            margin: 0;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
         
-        .set-info { 
-            font-size: 1.1rem; 
-            color: var(--text-muted); 
-            font-weight: 500;
+        .timer-time {
+            font-family: 'Black Ops One', cursive;
+            font-size: 10rem;
+            line-height: 0.9;
+            color: #fff;
+            margin-bottom: 0px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
+        
+        .timer-label {
+            font-size: 2rem;
+            font-family: 'Black Ops One', cursive;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 0px;
+            opacity: 0.9;
+        }
+        
+        .set-counter {
+            font-size: 1.2rem;
+            font-family: 'Black Ops One', cursive;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            background: rgba(255,255,255,0.05);
+            padding: 5px 20px;
+            border-radius: 50px;
+            letter-spacing: 2px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
         /* Visual Warning Overlay */
         #visualWarning {
@@ -318,36 +371,51 @@
 <body>
 
 <canvas id="bgCanvas"></canvas>
+<canvas id="visualizerCanvas"></canvas>
+
+<svg style="position: absolute; width: 0; height: 0;">
+    <defs>
+        <linearGradient id="vividGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:var(--accent-work); stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#f6e58d; stop-opacity:1" />
+        </linearGradient>
+    </defs>
+</svg>
 
 <div class="container">
     <div class="app-header">
-        <img src="z-rival-logo-transparent.png" alt="Z-Rival Logo" class="logo-icon">
-        <h1>Fitness Timer</h1>
+        <img src="z-rival-logo-transparent.png" alt="Rival Logo" class="logo-icon">
+        <h1>RIVAL FITNESS TIMER</h1>
     </div>
 
     <div id="setupSection">
         <div class="form-group">
-            <label>1. Music File (Max 50MB)</label>
+            <label>YOUR NAME</label>
+            <input type="text" id="userIdentity" placeholder="ENTER NAME">
+        </div>
+        
+        <div class="form-group">
+            <label>MUSIC (MP3/WAV)</label>
             <input type="file" id="musicInput" accept=".mp3, .wav">
             <div class="error-msg" id="fileError"></div>
         </div>
 
-        <div class="form-group">
-            <label>2. Exercise Duration (Seconds)</label>
-            <input type="number" id="durationInput" min="1" max="600" value="30">
-            <div class="error-msg" id="durationError"></div>
-        </div>
-
-        <div class="form-group">
-            <label>3. Rest Duration (Seconds)</label>
-            <input type="number" id="restInput" min="0" max="300" value="10">
-            <div class="error-msg" id="restError"></div>
-        </div>
-
-        <div class="form-group">
-            <label>4. Total Sets</label>
-            <input type="number" id="setsInput" min="1" max="100" value="5">
-            <div class="error-msg" id="setsError"></div>
+        <div style="display:flex; gap:10px; margin-bottom: 15px;">
+            <div class="form-group" style="flex:1;">
+                <label>WORK</label>
+                <input type="number" id="durationInput" min="1" max="600" value="30">
+                <div class="error-msg" id="durationError"></div>
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>REST</label>
+                <input type="number" id="restInput" min="0" max="300" value="10">
+                <div class="error-msg" id="restError"></div>
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>SETS</label>
+                <input type="number" id="setsInput" min="1" max="100" value="5">
+                <div class="error-msg" id="setsError"></div>
+            </div>
         </div>
 
         <div class="preset-section">
@@ -360,22 +428,28 @@
                 </div>
         </div>
 
-        <div class="btn-group">
-            <button id="startBtn" class="btn-start">Start Workout</button>
-            <button id="stopBtn" class="btn-stop" disabled>Stop</button>
+        <div class="btn-group" style="margin-top: 15px;">
+            <button id="startBtn" class="btn-start">START WORKOUT</button>
         </div>
     </div>
 
     <div id="statusPanel">
         <div class="timer-container">
-            <svg class="progress-ring" width="300" height="300">
-                <circle class="progress-ring-circle" stroke="#444" stroke-width="8" fill="transparent" r="130" cx="150" cy="150" />
-                <circle id="progressBar" class="progress-ring-circle" stroke="var(--accent-work)" stroke-width="12" fill="transparent" r="130" cx="150" cy="150" stroke-dasharray="816.8" stroke-dashoffset="0" />
+            <svg class="progress-ring" viewBox="0 0 400 400">
+                <circle class="progress-ring__circle-bg" r="180" cx="200" cy="200"/>
+                <circle id="progressBar" class="progress-ring__circle" stroke="url(#vividGradient)" r="180" cx="200" cy="200" />
             </svg>
-            <div class="timer-display" id="timerDisplay">00</div>
-            <div id="phaseBadge" class="phase-badge phase-work">Get Ready</div>
+            <div class="timer-center">
+                <div id="timerDisplay" class="timer-time">00</div>
+                <div id="phaseBadge" class="timer-label" style="color: var(--accent-work);">WORK</div>
+            </div>
         </div>
-        <div class="set-info" id="setInfo">Set 1 of 5</div>
+        <div id="setInfo" class="set-counter">SET 1 / 5</div>
+        <div class="btn-group" style="width: 100%; margin-top: auto;">
+            <button id="pauseBtn" class="main-btn btn-pause">PAUSE</button>
+            <button id="restartBtn" class="main-btn btn-start">RESTART</button>
+            <button id="stopBtn" class="main-btn btn-stop">END</button>
+        </div>
     </div>
 </div>
 
@@ -507,9 +581,17 @@
     let currentSet = 1;
     let isResting = false;
     let timeLeft = 0;
+    let isPaused = false;
+    let analyser = null;
+    let sourceNode = null;
+    let activePresetName = null;
+    
+    // --- Constants ---
+    const USER_KEY = 'zRival_user';
     
     // --- Elements ---
     const inputs = {
+        name: document.getElementById('userIdentity'),
         music: document.getElementById('musicInput'),
         duration: document.getElementById('durationInput'),
         rest: document.getElementById('restInput'),
@@ -529,12 +611,15 @@
     const ui = {
         startBtn: document.getElementById('startBtn'),
         stopBtn: document.getElementById('stopBtn'),
+        restartBtn: document.getElementById('restartBtn'),
+        pauseBtn: document.getElementById('pauseBtn'),
         statusPanel: document.getElementById('statusPanel'),
         badge: document.getElementById('phaseBadge'),
         timer: document.getElementById('timerDisplay'),
         setInfo: document.getElementById('setInfo'),
         warning: document.getElementById('visualWarning'),
-        setup: document.getElementById('setupSection')
+        setup: document.getElementById('setupSection'),
+        circle: document.getElementById('progressBar')
     };
 
     // --- Validation Logic ---
@@ -662,6 +747,18 @@
     // --- Audio Logic (Amplified) ---
     let wakeLock = null;
     
+    // --- AUDIO VISUALIZATION SETUP ---
+    const visCanvas = document.getElementById('visualizerCanvas');
+    const visCtx = visCanvas.getContext('2d');
+    visCanvas.width = window.innerWidth;
+    visCanvas.height = window.innerHeight * 0.35;
+    
+    // Handle window resize for visualizer
+    window.addEventListener('resize', () => {
+        visCanvas.width = window.innerWidth;
+        visCanvas.height = window.innerHeight * 0.35;
+    });
+    
     // Request wake lock to prevent phone from sleeping during workout
     async function requestWakeLock() {
         try {
@@ -685,11 +782,81 @@
     }
     
     function initAudio() {
-        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+        }
         // Resume audio context if it's suspended (e.g., after user interaction)
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
+    }
+    
+    // --- AUDIO VISUALIZATION ---
+    function initAudioSystem() {
+        if (!audioContext) {
+            initAudio();
+        }
+        
+        // Connect Music to Analyser
+        sourceNode = audioContext.createMediaElementSource(musicAudio);
+        sourceNode.connect(analyser);
+        analyser.connect(audioContext.destination);
+        
+        // Start Visualizer Loop
+        drawVisualizer();
+    }
+    
+    function drawVisualizer() {
+        requestAnimationFrame(drawVisualizer);
+        
+        if(!analyser) return;
+        
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
+        
+        visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+        
+        const barWidth = (visCanvas.width / bufferLength) * 2.5;
+        let barHeight;
+        let x = 0;
+        
+        for (let i = 0; i < bufferLength; i++) {
+            barHeight = dataArray[i] / 1.5; // Scale height
+            
+            // Bar Color: Dynamic Gradient based on Theme
+            const r = 192 + (barHeight/2);
+            const g = 255;
+            const b = 51;
+            
+            visCtx.fillStyle = `rgb(${r},${g},${b})`;
+            // Draw bar from bottom up
+            visCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
+            
+            x += barWidth + 1;
+        }
+    }
+    
+    function fadeMusic(targetVol, durationSec) {
+        if (!musicAudio || musicAudio.paused) return;
+        const startVol = musicAudio.volume;
+        const stepTime = 50; 
+        const steps = (durationSec * 1000) / stepTime;
+        const volStep = (targetVol - startVol) / steps;
+        let currentStep = 0;
+        
+        const fadeInterval = setInterval(() => {
+            currentStep++;
+            let newVol = startVol + (volStep * currentStep);
+            if (newVol > 1) newVol = 1; if (newVol < 0) newVol = 0;
+            musicAudio.volume = newVol;
+            if (currentStep >= steps || isPaused) {
+                clearInterval(fadeInterval);
+                if(!isPaused) musicAudio.volume = targetVol;
+            }
+        }, stepTime);
     }
 
     function playBeep() {
@@ -713,15 +880,44 @@
 
     // --- Voice Logic ---
     function speak(text) {
+        if(isPaused) return; 
         window.speechSynthesis.cancel();
+        fadeMusic(0.2, 0.5); 
+        
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.1; 
-        utterance.pitch = 1.0;
-        utterance.volume = 1.5; // Increased volume for louder announcements
         const voices = window.speechSynthesis.getVoices();
-        const enVoice = voices.find(v => v.lang.startsWith('en'));
-        if (enVoice) utterance.voice = enVoice;
+        let selectedVoice = voices.find(v => v.name.includes("Google US English") || v.name.includes("Samantha") || v.lang === "en-US");
+        if (selectedVoice) utterance.voice = selectedVoice;
+        
+        utterance.rate = 1.1; 
+        utterance.pitch = 1.0; 
+        utterance.volume = 1.0;
+        
+        utterance.onend = function() {
+            setTimeout(() => { if(!isPaused) fadeMusic(1.0, 2.0); }, 500);
+        };
         window.speechSynthesis.speak(utterance);
+    }
+    
+    // --- PAUSE/RESUME LOGIC ---
+    function togglePause() {
+        isPaused = !isPaused;
+        
+        if (isPaused) {
+            ui.pauseBtn.textContent = "RESUME";
+            ui.pauseBtn.classList.add('paused');
+            ui.circle.style.opacity = "0.3";
+            ui.timer.style.opacity = "0.5";
+            musicAudio.pause();
+            window.speechSynthesis.pause(); 
+        } else {
+            ui.pauseBtn.textContent = "PAUSE";
+            ui.pauseBtn.classList.remove('paused');
+            ui.circle.style.opacity = "1";
+            ui.timer.style.opacity = "1";
+            musicAudio.play();
+            window.speechSynthesis.resume();
+        }
     }
 
     function setupMusic() {
@@ -740,6 +936,7 @@
         // Initialize State
         currentSet = 1;
         isResting = false;
+        isPaused = false;
         const totalSets = parseInt(inputs.sets.value);
         const workDuration = parseInt(inputs.duration.value);
         timeLeft = workDuration;
@@ -750,17 +947,26 @@
         // UI Updates - Hide setup layout and show only status panel
         ui.startBtn.disabled = true;
         ui.stopBtn.disabled = false;
+        ui.restartBtn.disabled = false;
+        ui.pauseBtn.disabled = false;
+        ui.pauseBtn.textContent = "PAUSE";
+        ui.pauseBtn.classList.remove('paused');
         disableInputs(true);
         ui.setup.style.display = 'none'; // Hide setup layout
-        ui.statusPanel.style.display = 'block';
-        ui.statusPanel.style.marginTop = '0'; // Remove top margin for better centering
-        ui.statusPanel.style.paddingTop = '1rem'; // Reduce padding for better centering
+        ui.statusPanel.style.display = 'flex';
         updateStatusDisplay();
 
         // Start Audio
         setupMusic();
+        musicAudio.volume = 1.0;
         musicAudio.play().catch(e => console.error("Audio play failed", e));
-        speak("Workout Started. Get Ready!");
+        
+        // Initialize Audio Visualization
+        initAudioSystem();
+        
+        // Personalized Voice Notification
+        const name = inputs.name.value || "Rival";
+        speak(`Let's go ${name}. ${totalSets} sets starting now.`);
 
         // Start Loop
         timerInterval = setInterval(() => {
@@ -769,6 +975,8 @@
     }
 
     function tick(totalSets, workDuration) {
+        if (isPaused) return; 
+        
         // Warning Phase (Only during Exercise, last 5 seconds)
         if (!isResting && timeLeft <= 5 && timeLeft > 0) {
             playBeep();
@@ -796,29 +1004,50 @@
             if (restDuration > 0) {
                 isResting = true;
                 timeLeft = restDuration;
-                speak("Rest now"); // Voice Notification
+                
+                ui.badge.textContent = "REST";
+                ui.badge.style.color = "var(--accent-rest)";
+                // Switch to Rest Color
+                ui.circle.style.filter = "drop-shadow(0 0 8px var(--accent-rest))";
+                ui.circle.style.stroke = "var(--accent-rest)";
+                speak("Rest.");
             } else {
                 currentSet++;
                 timeLeft = workDuration;
-                speak("Next set. Let's start!"); // Voice Notification
+                
+                ui.badge.textContent = "WORK";
+                ui.badge.style.color = "var(--accent-work)";
+                // Switch to Work Gradient/Color
+                ui.circle.style.filter = "drop-shadow(0 0 8px var(--accent-work))";
+                ui.circle.style.stroke = "url(#vividGradient)";
+                
+                ui.setInfo.textContent = `SET ${currentSet} / ${totalSets}`;
+                speak("Let's start!");
             }
         } else {
             // Finished Rest -> Moving to Exercise
             isResting = false;
             currentSet++;
             timeLeft = workDuration;
-            speak("Let's start!"); // Voice Notification
+            
+            ui.badge.textContent = "WORK";
+            ui.badge.style.color = "var(--accent-work)";
+            // Switch to Work Gradient/Color
+            ui.circle.style.filter = "drop-shadow(0 0 8px var(--accent-work))";
+            ui.circle.style.stroke = "url(#vividGradient)";
+            
+            ui.setInfo.textContent = `SET ${currentSet} / ${totalSets}`;
+            speak("Let's start!");
         }
         updateStatusDisplay();
+        setProgress(100);
     }
 
     function finishSession() {
         stopLogic();
         ui.badge.textContent = "COMPLETE";
-        ui.badge.className = "phase-badge phase-work";
+        ui.badge.style.color = "var(--accent-work)";
         ui.timer.textContent = "DONE";
-        ui.badge.style.background = "#fff";
-        ui.badge.style.color = "#000";
         
         speak("Workout Complete!");
     }
@@ -829,37 +1058,43 @@
         musicAudio.currentTime = 0;
         ui.startBtn.disabled = false;
         ui.stopBtn.disabled = true;
+        ui.restartBtn.disabled = true;
+        ui.pauseBtn.disabled = true;
         disableInputs(false);
         ui.warning.style.display = 'none';
         ui.setup.style.display = 'block'; // Restore setup layout
         ui.statusPanel.style.display = 'none'; // Hide status panel
-        ui.statusPanel.style.marginTop = '2rem'; // Restore original margin
-        ui.statusPanel.style.paddingTop = '2rem'; // Restore original padding
         
         // Release wake lock when workout ends
         releaseWakeLock();
     }
     
     // Circular Progress Bar Logic
-    const progressBar = document.getElementById('progressBar');
-    const radius = progressBar.r.baseVal.value;
+    const radius = 180;
     const circumference = 2 * Math.PI * radius;
     
     // Initialize progress bar
-    progressBar.style.strokeDasharray = `${circumference} ${circumference}`;
-    progressBar.style.strokeDashoffset = circumference;
+    ui.circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    ui.circle.style.strokeDashoffset = 0;
+    
+    function setProgress(percent) {
+        const offset = circumference - (percent / 100) * circumference;
+        ui.circle.style.strokeDashoffset = offset;
+    }
     
     function updateProgressBar() {
         const totalDuration = isResting ? parseInt(inputs.rest.value) : parseInt(inputs.duration.value);
         const progress = (totalDuration - timeLeft) / totalDuration;
         const offset = circumference - (progress * circumference);
-        progressBar.style.strokeDashoffset = offset;
+        ui.circle.style.strokeDashoffset = offset;
         
-        // Update stroke color based on phase
+        // Update stroke color and shadow based on phase
         if (isResting) {
-            progressBar.style.stroke = 'var(--accent-rest)';
+            ui.circle.style.filter = "drop-shadow(0 0 8px var(--accent-rest))";
+            ui.circle.style.stroke = "var(--accent-rest)";
         } else {
-            progressBar.style.stroke = 'var(--accent-work)';
+            ui.circle.style.filter = "drop-shadow(0 0 8px var(--accent-work))";
+            ui.circle.style.stroke = "url(#vividGradient)";
         }
     }
 
@@ -878,21 +1113,20 @@
     function updateStatusDisplay() {
         const totalSets = inputs.sets.value;
         
+        // Update timer display with leading zero
+        ui.timer.textContent = timeLeft < 10 ? "0" + timeLeft : timeLeft;
+        
+        // Handle music volume based on phase
         if (isResting) {
-            ui.badge.textContent = "REST";
-            ui.badge.className = "phase-badge phase-rest";
             musicAudio.volume = 0.2; 
         } else {
-            ui.badge.textContent = "WORK";
-            ui.badge.className = "phase-badge phase-work";
             musicAudio.volume = 1.0;
         }
-
-        ui.setInfo.textContent = `Set ${currentSet} / ${totalSets}`;
-        ui.timer.textContent = timeLeft;
         
         // Update circular progress bar
-        updateProgressBar();
+        const totalDuration = isResting ? parseInt(inputs.rest.value) : parseInt(inputs.duration.value);
+        const percent = (timeLeft / totalDuration) * 100;
+        setProgress(percent);
     }
 
     function disableInputs(disabled) {
@@ -902,12 +1136,53 @@
         presetUI.saveBtn.disabled = disabled;
     }
 
+    // Initialize user name from localStorage
+    inputs.name.value = localStorage.getItem(USER_KEY) || "";
+    inputs.name.addEventListener('input', (e) => localStorage.setItem(USER_KEY, e.target.value));
+
     // --- Event Listeners ---
     ui.startBtn.addEventListener('click', startSession);
     ui.stopBtn.addEventListener('click', () => {
         stopLogic();
         ui.statusPanel.style.display = 'none';
     });
+    ui.restartBtn.addEventListener('click', () => {
+        // Stop current session and start a new one
+        clearInterval(timerInterval);
+        musicAudio.pause();
+        musicAudio.currentTime = 0;
+        window.speechSynthesis.cancel();
+        
+        // Reset state without going back to setup
+        currentSet = 1;
+        isResting = false;
+        isPaused = false;
+        const totalSets = parseInt(inputs.sets.value);
+        const workDuration = parseInt(inputs.duration.value);
+        timeLeft = workDuration;
+        
+        // Update UI
+        ui.badge.textContent = "WORK";
+        ui.badge.style.color = "var(--accent-work)";
+        ui.circle.style.filter = "drop-shadow(0 0 8px var(--accent-work))";
+        ui.circle.style.stroke = "url(#vividGradient)";
+        ui.setInfo.textContent = `SET ${currentSet} / ${totalSets}`;
+        
+        // Restart music and timer
+        musicAudio.play().catch(e => console.error("Audio play failed", e));
+        
+        // Personalized Voice Notification
+        const name = inputs.name.value || "Rival";
+        speak(`Restarting. Let's go ${name}. ${totalSets} sets.`);
+        
+        // Start Loop
+        timerInterval = setInterval(() => {
+            tick(totalSets, workDuration);
+        }, 1000);
+        
+        updateStatusDisplay();
+    });
+    ui.pauseBtn.addEventListener('click', togglePause);
     
     presetUI.saveBtn.addEventListener('click', savePreset);
 

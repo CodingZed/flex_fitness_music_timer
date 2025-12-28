@@ -260,13 +260,13 @@
         .phase-rest { background: rgba(255, 159, 67, 0.2); color: var(--accent-rest); }
 
         .timer-display { 
-            font-size: 5rem; 
-            font-weight: 700; 
+            font-size: 8rem; /* Increased size for better visibility */
+            font-weight: 900; 
             line-height: 1; 
             font-variant-numeric: tabular-nums;
-            margin: 10px 0;
+            margin: 20px 0;
             color: var(--text-main);
-            text-shadow: 0 0 20px rgba(255,255,255,0.2);
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
         }
         
         .set-info { 
@@ -631,8 +631,36 @@
     }
 
     // --- Audio Logic (Amplified) ---
+    let wakeLock = null;
+    
+    // Request wake lock to prevent phone from sleeping during workout
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => {
+                    console.log('Wake Lock released');
+                });
+            }
+        } catch (err) {
+            console.error('Wake Lock request failed:', err);
+        }
+    }
+    
+    // Release wake lock when workout ends
+    function releaseWakeLock() {
+        if (wakeLock) {
+            wakeLock.release();
+            wakeLock = null;
+        }
+    }
+    
     function initAudio() {
         if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Resume audio context if it's suspended (e.g., after user interaction)
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
     }
 
     function playBeep() {
@@ -660,7 +688,7 @@
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.1; 
         utterance.pitch = 1.0;
-        utterance.volume = 1.0;
+        utterance.volume = 1.5; // Increased volume for louder announcements
         const voices = window.speechSynthesis.getVoices();
         const enVoice = voices.find(v => v.lang.startsWith('en'));
         if (enVoice) utterance.voice = enVoice;
@@ -676,7 +704,7 @@
     }
 
     // --- Timer Engine ---
-    function startSession() {
+    async function startSession() {
         if (!validateInputs()) return;
         initAudio();
 
@@ -687,11 +715,17 @@
         const workDuration = parseInt(inputs.duration.value);
         timeLeft = workDuration;
 
-        // UI Updates
+        // Request wake lock to prevent phone from sleeping
+        await requestWakeLock();
+
+        // UI Updates - Hide setup layout and show only status panel
         ui.startBtn.disabled = true;
         ui.stopBtn.disabled = false;
         disableInputs(true);
+        ui.setup.style.display = 'none'; // Hide setup layout
         ui.statusPanel.style.display = 'block';
+        ui.statusPanel.style.marginTop = '0'; // Remove top margin for better centering
+        ui.statusPanel.style.paddingTop = '1rem'; // Reduce padding for better centering
         updateStatusDisplay();
 
         // Start Audio
@@ -737,14 +771,14 @@
             } else {
                 currentSet++;
                 timeLeft = workDuration;
-                speak("Next set. Go!"); // Voice Notification
+                speak("Next set. Let's start!"); // Voice Notification
             }
         } else {
             // Finished Rest -> Moving to Exercise
             isResting = false;
             currentSet++;
             timeLeft = workDuration;
-            speak("Go!"); // Voice Notification
+            speak("Let's start!"); // Voice Notification
         }
         updateStatusDisplay();
     }
@@ -768,6 +802,13 @@
         ui.stopBtn.disabled = true;
         disableInputs(false);
         ui.warning.style.display = 'none';
+        ui.setup.style.display = 'block'; // Restore setup layout
+        ui.statusPanel.style.display = 'none'; // Hide status panel
+        ui.statusPanel.style.marginTop = '2rem'; // Restore original margin
+        ui.statusPanel.style.paddingTop = '2rem'; // Restore original padding
+        
+        // Release wake lock when workout ends
+        releaseWakeLock();
     }
 
     function showVisualWarning(num) {

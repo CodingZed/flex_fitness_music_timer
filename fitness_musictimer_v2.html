@@ -457,6 +457,21 @@
 
 <script>
     // ==========================================
+    // --- UTILITY FUNCTIONS ---
+    // ==========================================
+    // Device detection
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isLowPerformance = isMobile || navigator.hardwareConcurrency < 4;
+    
+    // Performance settings based on device
+    const performanceSettings = {
+        particleCount: isLowPerformance ? 10 : 30,
+        animationThrottle: isLowPerformance ? 2 : 1,
+        shadowIntensity: isLowPerformance ? 0.5 : 1,
+        enableAnimations: !isLowPerformance
+    };
+    
+    // ==========================================
     // --- POWER PULSE LIVE BG ---
     // ==========================================
     const canvas = document.getElementById('bgCanvas');
@@ -471,6 +486,45 @@
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+    });
+    
+    // Handle visibility change to manage animations and audio
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            // App is in background
+            performanceSettings.enableAnimations = false;
+            
+            // Try to keep audio playing in background
+            if (audioContext && audioContext.state === 'suspended' && timerInterval) {
+                audioContext.resume().catch(e => {
+                    console.error('Failed to resume audio context in background:', e);
+                });
+            }
+            
+            // Re-acquire wake lock if lost
+            if (timerInterval && !wakeLock) {
+                requestWakeLock().catch(err => {
+                    console.error('Failed to re-acquire wake lock in background:', err);
+                });
+            }
+        } else {
+            // App is visible again
+            performanceSettings.enableAnimations = !isLowPerformance;
+            
+            // Resume audio context if it was suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().catch(e => {
+                    console.error('Failed to resume audio context when visible:', e);
+                });
+            }
+            
+            // Ensure wake lock is active if we're in a workout
+            if (timerInterval) {
+                requestWakeLock().catch(err => {
+                    console.error('Failed to re-acquire wake lock when visible:', err);
+                });
+            }
+        }
     });
 
     class Shockwave {
@@ -532,14 +586,27 @@
     }
 
     function triggerPulse() {
+        if (!performanceSettings.enableAnimations) return;
+        
         shockwaves.push(new Shockwave());
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < performanceSettings.particleCount; i++) {
             particles.push(new BurstParticle());
         }
     }
 
     let frame = 0;
+    let animationFrameId = null;
+    
     function animate() {
+        // Skip animation if disabled
+        if (!performanceSettings.enableAnimations) {
+            // Clear canvas if animations are disabled
+            ctx.fillStyle = 'rgba(18, 18, 18, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            animationFrameId = requestAnimationFrame(animate);
+            return;
+        }
+        
         ctx.fillStyle = 'rgba(18, 18, 18, 0.25)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -565,10 +632,13 @@
                 i--;
             }
         }
-        requestAnimationFrame(animate);
+        animationFrameId = requestAnimationFrame(animate);
     }
 
-    animate();
+    // Start animation after a short delay to allow app to load
+    setTimeout(() => {
+        animate();
+    }, 1000);
 
     // ==========================================
     // --- MAIN APP LOGIC ---
@@ -763,10 +833,16 @@
     async function requestWakeLock() {
         try {
             if ('wakeLock' in navigator) {
+                // Request screen wake lock first
                 wakeLock = await navigator.wakeLock.request('screen');
                 wakeLock.addEventListener('release', () => {
-                    console.log('Wake Lock released');
+                    console.log('Screen Wake Lock released');
+                    // Try to re-acquire wake lock if workout is still active
+                    if (timerInterval) {
+                        requestWakeLock().catch(err => console.error('Failed to re-acquire wake lock:', err));
+                    }
                 });
+                console.log('Screen Wake Lock acquired');
             }
         } catch (err) {
             console.error('Wake Lock request failed:', err);
@@ -786,10 +862,23 @@
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
             analyser.fftSize = 256;
+            
+            // Add AudioContext state change listener to handle suspension
+            audioContext.addEventListener('statechange', () => {
+                console.log('AudioContext state changed:', audioContext.state);
+                if (audioContext.state === 'suspended' && timerInterval) {
+                    // Try to resume audio context if we're in a workout
+                    audioContext.resume().catch(err => {
+                        console.error('Failed to resume AudioContext:', err);
+                    });
+                }
+            });
         }
         // Resume audio context if it's suspended (e.g., after user interaction)
         if (audioContext.state === 'suspended') {
-            audioContext.resume();
+            audioContext.resume().catch(err => {
+                console.error('Failed to resume AudioContext:', err);
+            });
         }
     }
     
@@ -819,11 +908,15 @@
         
         visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
         
-        const barWidth = (visCanvas.width / bufferLength) * 2.5;
+        // Optimize visualization based on performance
+        const barWidth = isLowPerformance ? 3 : (visCanvas.width / bufferLength) * 2.5;
         let barHeight;
         let x = 0;
         
-        for (let i = 0; i < bufferLength; i++) {
+        // Skip every other bar on mobile for better performance
+        const step = isLowPerformance ? 2 : 1;
+        
+        for (let i = 0; i < bufferLength; i += step) {
             barHeight = dataArray[i] / 1.5; // Scale height
             
             // Bar Color: Dynamic Gradient based on Theme

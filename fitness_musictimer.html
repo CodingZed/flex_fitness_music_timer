@@ -67,15 +67,15 @@
         }
 
         .logo-icon {
-            /* Set height and auto width to maintain natural aspect ratio */
+            /* Set fixed dimensions for circular shape */
             height: 48px;
-            width: auto;
-            /* Ensure logo maintains its aspect ratio */
+            width: 48px;
+            /* Ensure logo maintains its aspect ratio within circular container */
             object-fit: contain;
             /* Prevent any flex container squeezing */
             flex-shrink: 0;
-            /* Prevent CSS from stretching the image */
-            max-width: none;
+            /* Add circular styling */
+            border-radius: 50%;
             /* Simple styling for transparent logo */
             background: transparent;
             /* Add neon glow effect */
@@ -232,7 +232,7 @@
 
 <div class="container">
     <div class="app-header">
-        <img src="z-rival-logo-optimized.png" alt="Z-Rival Logo" class="logo-icon">
+        <img src="z-rival-logo-transparent.png" alt="Z-Rival Logo" class="logo-icon">
         <h1>Fitness Timer</h1>
     </div>
 

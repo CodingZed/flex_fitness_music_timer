@@ -172,14 +172,35 @@
         .phase-work { background: rgba(192, 255, 51, 0.2); color: var(--accent-work); }
         .phase-rest { background: rgba(255, 159, 67, 0.2); color: var(--accent-rest); }
 
-        .timer-display { 
-            font-size: 8rem; /* Increased size for better visibility */
+        /* Circular Progress Timer */
+        .timer-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+            transform-origin: center;
+        }
+        
+        .timer-display {
+            position: absolute;
+            font-size: 6rem; 
             font-weight: 900; 
-            line-height: 1; 
+            line-height: 1;
             font-variant-numeric: tabular-nums;
-            margin: 20px 0;
             color: var(--text-main);
             text-shadow: 0 0 30px rgba(255,255,255,0.3);
+            margin: 0;
         }
         
         .set-info { 
@@ -247,8 +268,14 @@
     </div>
 
     <div id="statusPanel">
-        <div id="phaseBadge" class="phase-badge phase-work">Get Ready</div>
-        <div class="timer-display" id="timerDisplay">00</div>
+        <div class="timer-container">
+            <svg class="progress-ring" width="300" height="300">
+                <circle class="progress-ring-circle" stroke="#444" stroke-width="8" fill="transparent" r="130" cx="150" cy="150" />
+                <circle id="progressBar" class="progress-ring-circle" stroke="var(--accent-work)" stroke-width="12" fill="transparent" r="130" cx="150" cy="150" stroke-dasharray="816.8" stroke-dashoffset="0" />
+            </svg>
+            <div class="timer-display" id="timerDisplay">00</div>
+            <div id="phaseBadge" class="phase-badge phase-work">Get Ready</div>
+        </div>
         <div class="set-info" id="setInfo">Set 1 of 5</div>
     </div>
 </div>
@@ -618,6 +645,29 @@
         // Release wake lock when workout ends
         releaseWakeLock();
     }
+    
+    // Circular Progress Bar Logic
+    const progressBar = document.getElementById('progressBar');
+    const radius = progressBar.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+    
+    // Initialize progress bar
+    progressBar.style.strokeDasharray = `${circumference} ${circumference}`;
+    progressBar.style.strokeDashoffset = circumference;
+    
+    function updateProgressBar() {
+        const totalDuration = isResting ? parseInt(inputs.rest.value) : parseInt(inputs.duration.value);
+        const progress = (totalDuration - timeLeft) / totalDuration;
+        const offset = circumference - (progress * circumference);
+        progressBar.style.strokeDashoffset = offset;
+        
+        // Update stroke color based on phase
+        if (isResting) {
+            progressBar.style.stroke = 'var(--accent-rest)';
+        } else {
+            progressBar.style.stroke = 'var(--accent-work)';
+        }
+    }
 
     function showVisualWarning(num) {
         ui.warning.textContent = num;
@@ -646,6 +696,9 @@
 
         ui.setInfo.textContent = `Set ${currentSet} / ${totalSets}`;
         ui.timer.textContent = timeLeft;
+        
+        // Update circular progress bar
+        updateProgressBar();
     }
 
     function disableInputs(disabled) {

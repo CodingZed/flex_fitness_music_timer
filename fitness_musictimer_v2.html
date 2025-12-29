@@ -269,8 +269,11 @@
             display: none; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: center;
+            /* Changed from center to flex-start to allow margins to push it down securely */
+            justify-content: flex-start;
             height: 100%;
+            /* Added padding to push everything down */
+            padding-top: 20px;
             animation: fadeIn 0.5s ease;
         }
 
@@ -282,7 +285,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 10px 0 20px 0;
+            /* Increased top margin significantly (was 10px) to clear the header */
+            margin: 70px 0 30px 0;
+            transition: transform 0.05s ease-out;
+            transform-origin: center center;
         }
         
         .progress-ring {
@@ -305,6 +311,18 @@
             transition: stroke-dashoffset 1s linear, filter 0.3s ease, stroke 0.3s ease; 
             transform-origin: 50% 50%;
             filter: drop-shadow(0 0 8px var(--accent-work));
+        }
+        
+        /* Circular Audio Visualizer */
+        .circular-visualizer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); 
+            width: 500px; 
+            height: 500px;
+            z-index: 1; 
+            pointer-events: none;
         }
         
         .timer-center {
@@ -434,7 +452,9 @@
     </div>
 
     <div id="statusPanel">
-        <div class="timer-container">
+        <div class="timer-container" id="timerContainer">
+            <!-- Circular Audio Visualization Canvas -->
+            <canvas id="circularVisualizerCanvas" class="circular-visualizer" width="500" height="500"></canvas>
             <svg class="progress-ring" viewBox="0 0 400 400">
                 <circle class="progress-ring__circle-bg" r="180" cx="200" cy="200"/>
                 <circle id="progressBar" class="progress-ring__circle" stroke="url(#vividGradient)" r="180" cx="200" cy="200" />
@@ -689,7 +709,8 @@
         setInfo: document.getElementById('setInfo'),
         warning: document.getElementById('visualWarning'),
         setup: document.getElementById('setupSection'),
-        circle: document.getElementById('progressBar')
+        circle: document.getElementById('progressBar'),
+        timerContainer: document.getElementById('timerContainer')
     };
 
     // --- Validation Logic ---
@@ -823,6 +844,10 @@
     visCanvas.width = window.innerWidth;
     visCanvas.height = window.innerHeight * 0.35;
     
+    // Circular Visualization Setup
+    const circularVisCanvas = document.getElementById('circularVisualizerCanvas');
+    const circularVisCtx = circularVisCanvas.getContext('2d');
+    
     // Handle window resize for visualizer
     window.addEventListener('resize', () => {
         visCanvas.width = window.innerWidth;
@@ -861,24 +886,19 @@
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
-            analyser.fftSize = 256;
+            // Larger FFT for better bass resolution
+            analyser.fftSize = 512;
             
             // Add AudioContext state change listener to handle suspension
             audioContext.addEventListener('statechange', () => {
-                console.log('AudioContext state changed:', audioContext.state);
                 if (audioContext.state === 'suspended' && timerInterval) {
-                    // Try to resume audio context if we're in a workout
-                    audioContext.resume().catch(err => {
-                        console.error('Failed to resume AudioContext:', err);
-                    });
+                    audioContext.resume().catch(console.error);
                 }
             });
         }
         // Resume audio context if it's suspended (e.g., after user interaction)
         if (audioContext.state === 'suspended') {
-            audioContext.resume().catch(err => {
-                console.error('Failed to resume AudioContext:', err);
-            });
+            audioContext.resume().catch(console.error);
         }
     }
     
@@ -906,14 +926,11 @@
         const dataArray = new Uint8Array(bufferLength);
         analyser.getByteFrequencyData(dataArray);
         
+        // --- 1. Linear Visualizer (Bottom) ---
         visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
-        
-        // Optimize visualization based on performance
         const barWidth = isLowPerformance ? 3 : (visCanvas.width / bufferLength) * 2.5;
         let barHeight;
         let x = 0;
-        
-        // Skip every other bar on mobile for better performance
         const step = isLowPerformance ? 2 : 1;
         
         for (let i = 0; i < bufferLength; i += step) {
@@ -929,6 +946,85 @@
             visCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
             
             x += barWidth + 1;
+        }
+        
+        // --- 2. Heartbeat Logic (Bass Detection) ---
+        // Calculate average volume of lower frequencies (bass)
+        let bassTotal = 0;
+        const bassSamples = 20; // First 20 bins are usually deep bass
+        for(let i = 0; i < bassSamples; i++) {
+            bassTotal += dataArray[i];
+        }
+        const bassAverage = bassTotal / bassSamples;
+        
+        // Apply scaling if audio is playing and not paused
+        if (!musicAudio.paused && bassAverage > 100) {
+            // Scale between 1.0 and 1.08 based on volume
+            const scale = 1 + ((bassAverage - 100) / 155) * 0.08;
+            ui.timerContainer.style.transform = `scale(${scale})`;
+        } else {
+            ui.timerContainer.style.transform = `scale(1)`;
+        }
+
+        // --- 3. Circular Visualizer (Orange/Red Spectrum) ---
+        drawCircularVisualizer(dataArray);
+    }
+    
+    function drawCircularVisualizer(dataArray) {
+        if(!circularVisCanvas || !circularVisCtx) return;
+        
+        const canvasWidth = circularVisCanvas.width;
+        const canvasHeight = circularVisCanvas.height;
+        const centerX = canvasWidth / 2;
+        const centerY = canvasHeight / 2;
+        const radius = 175; // Slightly smaller than the progress ring (180) to sit just inside/behind
+        
+        circularVisCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+        
+        // We want a symmetrical "sunburst" look.
+        // We will mirror the data: 0 -> Max -> 0
+        // Using a subset of the frequency data (mid-range looks best for bars)
+        const usefulDataPoints = 80; 
+        const bars = usefulDataPoints * 2; // Total bars (mirrored)
+        const angleStep = (Math.PI * 2) / bars;
+        
+        for (let i = 0; i < bars; i++) {
+            // Mirror logic: 
+            // If i is in first half, map directly. If in second half, map backwards.
+            let dataIndex = i;
+            if (i >= usefulDataPoints) {
+                dataIndex = (bars - i);
+            }
+            
+            // Get value, scale it
+            // We skip the very first few low freq bins to avoid constant "on" state
+            const val = dataArray[dataIndex + 4] || 0; 
+            const barLength = (val / 255) * 60; // Max length 60px outwards
+
+            if (barLength < 2) continue; // Skip tiny bars
+
+            const angle = i * angleStep - (Math.PI / 2); // Start at top -90deg
+            
+            // Calculate Start and End points of the bar (Radiating OUTWARD)
+            const x1 = centerX + Math.cos(angle) * (radius - 10); // Start slightly inside
+            const y1 = centerY + Math.sin(angle) * (radius - 10);
+            const x2 = centerX + Math.cos(angle) * (radius + barLength);
+            const y2 = centerY + Math.sin(angle) * (radius + barLength);
+
+            // Dynamic Orange/Red Color
+            // Louder = More Yellow/White, Quieter = Red/Orange
+            const hue = val > 200 ? 60 : (val > 100 ? 30 : 10); // Yellow -> Orange -> Red
+            const saturation = 100;
+            const lightness = 50 + (val/255)*20;
+            
+            circularVisCtx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            circularVisCtx.lineWidth = 4; // Thick bars
+            circularVisCtx.lineCap = 'round';
+
+            circularVisCtx.beginPath();
+            circularVisCtx.moveTo(x1, y1);
+            circularVisCtx.lineTo(x2, y2);
+            circularVisCtx.stroke();
         }
     }
     
